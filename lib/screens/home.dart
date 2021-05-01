@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:grocery_control/models/grocery_item.dart';
+import 'package:grocery_control/models/group.dart';
 import 'package:grocery_control/services/auth.dart';
 import 'package:grocery_control/services/db.dart';
 import 'package:grocery_control/widgets/item_card.dart';
@@ -9,17 +10,23 @@ import 'package:grocery_control/widgets/item_card.dart';
 class Home extends StatefulWidget {
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
-
-  const Home({Key key, this.auth, this.firestore}) : super(key: key);
+  final GroupModel group;
+  const Home({Key key, this.auth, this.firestore, this.group})
+      : super(key: key);
 
   @override
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  final TextEditingController _groupController = TextEditingController();
   final TextEditingController _itemController = TextEditingController();
-  String _group = "default";
+  GroupModel _group;
+  @override
+  void initState() {
+    super.initState();
+    _group = widget.group;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,45 +49,81 @@ class _HomeState extends State<Home> {
           ),
         ],
       ),
-      body: Column(
-        children: <Widget>[
-          const SizedBox(
-            height: 20,
-          ),
-          const Text(
-            "Change group:",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Card(
-            margin: const EdgeInsets.all(20),
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      key: const ValueKey("groupField"),
-                      controller: _groupController,
-                    ),
+      drawer: Drawer(
+          child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 8),
+              child: Column(
+                children: <Widget>[
+                  const SizedBox(
+                    height: 30,
                   ),
-                  IconButton(
-                    key: const ValueKey("groupButton"),
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      if (_groupController.text != "") {
-                        setState(() {
-                          _group = _groupController.text.trim();
-                          _groupController.clear();
-                        });
+                  StreamBuilder(
+                    stream: Database(firestore: widget.firestore)
+                        .streamGroups(uid: widget.auth.currentUser.uid),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<List<GroupModel>> snapshot) {
+                      if (snapshot.connectionState == ConnectionState.active) {
+                        if (snapshot.data.isEmpty) {
+                          return const Center(
+                            child: Text("No groups available"),
+                          );
+                        }
+                        if (snapshot.data.length == 1) {
+                          return Center(
+                            child: Text(snapshot.data.first.name),
+                          );
+                        }
+                        return DropdownButton<GroupModel>(
+                          value: _group,
+                          icon: const Icon(
+                            Icons.people_alt_outlined,
+                            color: Colors.white,
+                          ),
+                          iconSize: 24,
+                          elevation: 16,
+                          style: const TextStyle(
+                              color: Colors.purple,
+                              fontSize: 20,
+                              fontFamily: "Trebuchet MS"),
+                          underline: Container(
+                            height: 2,
+                            color: Colors.purpleAccent,
+                          ),
+                          hint: Container(
+                            child: Text(_group.name),
+                          ),
+                          items: snapshot.data
+                              .map<DropdownMenuItem<GroupModel>>((value) {
+                            return DropdownMenuItem<GroupModel>(
+                              value: value,
+                              child: Text(value.name),
+                            );
+                          }).toList(),
+                          isExpanded: true,
+                          onChanged: (GroupModel newValue) {
+                            setState(() {
+                              _group = newValue;
+                              Database(firestore: widget.firestore)
+                                  .setLastGroup(
+                                      uid: widget.auth.currentUser.uid,
+                                      group: _group);
+                            });
+                            Navigator.pop(context);
+                          },
+                        );
+                      } else {
+                        return const Center(
+                          child: Text("loading..."),
+                        );
                       }
                     },
                   )
                 ],
-              ),
-            ),
+              ))),
+      body: Column(
+        children: <Widget>[
+          const SizedBox(
+            height: 20,
           ),
           const Text(
             "Add item:",
@@ -108,7 +151,7 @@ class _HomeState extends State<Home> {
                       if (_itemController.text != "") {
                         setState(() {
                           Database(firestore: widget.firestore).addItem(
-                              group: _group,
+                              group: _group.groupId,
                               name: _itemController.text);
                           _itemController.clear();
                         });
@@ -132,7 +175,7 @@ class _HomeState extends State<Home> {
           Expanded(
             child: StreamBuilder(
               stream: Database(firestore: widget.firestore)
-                  .streamItems(group: _group),
+                  .streamItems(group: _group.groupId),
               builder: (BuildContext context,
                   AsyncSnapshot<List<GroceryItemModel>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
@@ -147,7 +190,7 @@ class _HomeState extends State<Home> {
                       return GroceryItemCard(
                         firestore: widget.firestore,
                         item: snapshot.data[index],
-                        group: _group,
+                        group: _group.groupId,
                       );
                     },
                   );
@@ -162,7 +205,7 @@ class _HomeState extends State<Home> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: (){},
+        onPressed: () {},
         child: const Icon(Icons.navigation),
         backgroundColor: Colors.purple,
       ),

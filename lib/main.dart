@@ -6,6 +6,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:grocery_control/screens/home.dart';
 import 'package:grocery_control/screens/login.dart';
 import 'package:grocery_control/services/auth.dart';
+import 'package:grocery_control/services/db.dart';
+import 'package:grocery_control/models/group.dart';
 
 void main() {
   runApp(App());
@@ -55,6 +57,7 @@ class Root extends StatefulWidget {
 class _RootState extends State<Root> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
@@ -67,10 +70,26 @@ class _RootState extends State<Root> {
               firestore: _firestore,
             );
           } else {
-            return Home(
-              auth: _auth, 
-              firestore: _firestore,
-            );
+            return FutureBuilder(
+                future: Database(firestore: _firestore)
+                    .getLastGroup(uid: _auth.currentUser.uid),
+                builder: (BuildContext context,
+                    AsyncSnapshot<GroupModel> groupSnapshot) {
+                  if (groupSnapshot.connectionState == ConnectionState.done) {
+                    if (groupSnapshot.data != null) {
+                      return Home(
+                          auth: _auth,
+                          firestore: _firestore,
+                          group: groupSnapshot.data);
+                    }
+                  } else {
+                    return const Scaffold(
+                      body: Center(
+                        child: Text("Loading..."),
+                      ),
+                    );
+                  }
+                });
           }
         } else {
           return const Scaffold(
