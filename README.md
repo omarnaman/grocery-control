@@ -1,16 +1,10 @@
-# grocery_control
+# Grocery Control
 
-A new Flutter project.
+**Grocery Control** is an eco-system for mainly handling shopping lists, but can be used as an application for anything based on checklists.
 
-## Getting Started
+# Features
+The goal of **Grocery Control** is to create a platform for easily sharable checklists(groups) to be watched simultaneously by multiple people and keeping them up-to-date with all the actions on the watched checklists.
 
-This project is a starting point for a Flutter application.
+**Grocery Control** happened to address the haphazard grocery list management. No need for calls, messages  mid shopping to add new items to the list, or old-fashioned pen & paper lists, just modify the shared list over the cloud.
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
