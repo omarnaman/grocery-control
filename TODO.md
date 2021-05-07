@@ -9,8 +9,8 @@
 - [ ] More item details
 - [ ] Auto completion when adding items
 - [ ] Add Checked filter
-- [x] Add Sorting
-- [ ] Support sorting by fields other than name 
+- [ ] Add Sorting (Sorting and filtering are not really supporting by firestore)
+- [x] Support sorting by fields other than name 
 ## UI
 - [ ] Separate user creation from logging in (allows for setting other profile parameters)
 - [ ] Animations
