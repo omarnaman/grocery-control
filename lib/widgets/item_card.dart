@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:grocery_control/models/grocery_item.dart';
 import 'package:grocery_control/services/db.dart';
+import 'package:grocery_control/widgets/aqel_checkbox.dart';
 
 class GroceryItemCard extends StatefulWidget {
   final GroceryItemModel item;
@@ -34,7 +35,7 @@ class _GroceryItemCardState extends State<GroceryItemCard> {
                 ),
               ),
             ),
-            Checkbox(
+            AqelCheckbox(
               value: widget.item.checked,
               onChanged: (newValue) {
                 setState(() {});

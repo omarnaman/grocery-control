@@ -82,6 +82,11 @@ class _RootState extends State<Root> {
                           firestore: _firestore,
                           group: groupSnapshot.data);
                     }
+                    return const Scaffold(
+                      body: Center(
+                        child: Text("Error - No Group Found"),
+                      ),
+                    );
                   } else {
                     return const Scaffold(
                       body: Center(

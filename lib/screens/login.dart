@@ -44,7 +44,7 @@ class _LoginState extends State<Login> {
                 const SizedBox(
                   height: 20,
                 ),
-                RaisedButton(
+                ElevatedButton(
                   key: const ValueKey("signIn"),
                   onPressed: () async {
                     final String retVal = await Auth(auth: widget.auth).signIn(
@@ -64,7 +64,7 @@ class _LoginState extends State<Login> {
                   },
                   child: const Text("Sign In"),
                 ),
-                FlatButton(
+                TextButton(
                   key: const ValueKey("createAccount"),
                   onPressed: () async {
                     final String retVal =
