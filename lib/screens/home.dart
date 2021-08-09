@@ -163,19 +163,24 @@ class _HomeState extends State<Home> {
                   //     ),
                   //   ],
                   // ),
-                  Row(
-                    children: <Widget>[
-                      Expanded(child: Text("Filter out Checked")),
-                      AqelCheckbox(
-                        value: _filterChecked,
-                        onChanged: (newValue) {
-                          setState(() {
-                            _filterChecked = newValue;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
+                  Card(
+                      margin: const EdgeInsets.all(1),
+                      color: Theme.of(context).cardColor,
+                      child: Padding (
+                        padding: const EdgeInsets.all(15),
+                        child: Row(
+                        children: <Widget>[
+                          Expanded(child: Text("Filter out Checked")),
+                          AqelCheckbox(
+                            value: _filterChecked,
+                            onChanged: (newValue) {
+                              setState(() {
+                                _filterChecked = newValue;
+                              });
+                            },
+                          ),
+                        ],
+                      ))),
                 ],
               ))),
       body: Column(
