@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:grocery_control/models/grocery_item.dart';
@@ -9,10 +11,10 @@ class GroceryItemCard extends StatefulWidget {
   final FirebaseFirestore firestore;
 
   GroceryItemCard({Key key, this.item, this.firestore, String group})
-      : super(key: key){
-        item.group = group;
-      }
-  
+      : super(key: key) {
+    item.group = group;
+  }
+
   @override
   _GroceryItemCardState createState() => _GroceryItemCardState();
 }
@@ -20,34 +22,62 @@ class GroceryItemCard extends StatefulWidget {
 class _GroceryItemCardState extends State<GroceryItemCard> {
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                widget.item.name,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onLongPress: () {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text("Item Deletion"),
+                content: Text(
+                    "Are you sure you want to delete ${{widget.item.name}}?"),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Database(firestore: widget.firestore)
+                            .deleteItem(item: widget.item);
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("Delete")),
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("Cancel")),
+                ],
+              );
+            });
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.item.name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            AqelCheckbox(
-              value: widget.item.checked,
-              onChanged: (newValue) {
-                setState(() {});
-                Database(firestore: widget.firestore).updateItem(
-                  group: widget.item.group,
-                  name: widget.item.name,
-                  itemId: widget.item.itemId,
-                  checked: newValue,
-                );
-              },
-            ),
-          ],
+              Checkbox(
+                value: widget.item.checked,
+                
+                onChanged: (newValue) {
+                  setState(() {});
+                  Database(firestore: widget.firestore).updateItem(
+                    group: widget.item.group,
+                    name: widget.item.name,
+                    itemId: widget.item.itemId,
+                    checked: newValue,
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
