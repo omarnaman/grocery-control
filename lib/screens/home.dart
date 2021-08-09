@@ -84,7 +84,7 @@ class _HomeState extends State<Home> {
                   ),
                   FutureBuilder(
                     future: Database(firestore: widget.firestore)
-                        .streamGroupsRefs2(uid: widget.auth.currentUser.uid),
+                        .streamGroups(uid: widget.auth.currentUser.uid),
                     builder: (BuildContext context,
                         AsyncSnapshot<List<GroupModel>> snapshot) {
                       if (snapshot.connectionState == ConnectionState.done) {

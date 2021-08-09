@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:grocery_control/models/grocery_item.dart';
 import 'package:grocery_control/models/group.dart';
 import 'package:grocery_control/utils/constants.dart';
@@ -8,44 +9,7 @@ class Database {
 
   Database({this.firestore});
 
-  Stream<List<GroupModel>> streamGroups({String uid}) {
-    try {
-      return firestore
-          .collection("users")
-          .doc(uid)
-          .collection("groups")
-          .snapshots()
-          .map((query) {
-        final List<GroupModel> retVal = <GroupModel>[];
-        for (final DocumentSnapshot doc in query.docs) {
-          retVal.add(GroupModel.fromDocumentSnapshot(documentSnapshot: doc));
-        }
-        return retVal;
-      });
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Stream<List<GroupModel>> streamGroupsRefs({String uid}) {
-    try {
-      var futures = firestore.collection("users").doc(uid).get().then((doc) {
-        final List<Future<GroupModel>> retVal = <Future<GroupModel>>[];
-        final List<DocumentReference> groupRefs = doc.data()["group_ref_array"];
-        for (DocumentReference documentRef in groupRefs) {
-          retVal.add(documentRef.get().then((value) {
-            return GroupModel.fromDocumentSnapshot(documentSnapshot: value);
-          }));
-        }
-        return Future.wait(retVal);
-      });
-      return Stream.fromFuture(futures);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<List<GroupModel>> streamGroupsRefs2({String uid}) async {
+  Future<List<GroupModel>> streamGroups({String uid}) async {
     try {
       DocumentSnapshot userDoc =
           await firestore.collection("users").doc(uid).get();
@@ -92,7 +56,7 @@ class Database {
           .doc(group)
           .collection("items")
           .where("Name", isNotEqualTo: null);
-      if (sortDirection == null) {
+      if (false && sortDirection != null) {
         itemsCollection = itemsCollection.orderBy("Name",
             descending: sortDirection == SortDirection.Decsending);
       }
@@ -155,6 +119,19 @@ class Database {
         "Checked": checked,
         "Name": name,
       });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> deleteItem({GroceryItemModel item}) async {
+    try {
+      firestore
+          .collection("items")
+          .doc(item.group)
+          .collection("items")
+          .doc(item.itemId)
+          .delete();
     } catch (e) {
       rethrow;
     }
