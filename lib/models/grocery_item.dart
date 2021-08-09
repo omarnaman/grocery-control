@@ -19,4 +19,5 @@ class GroceryItemModel {
     checked = documentSnapshot.data()['Checked'] as bool;
     group = group;
   }
+
 }
