@@ -37,6 +37,7 @@ class _LoginState extends State<Login> {
                 ),
                 TextFormField(
                   key: const ValueKey("password"),
+                  obscureText: true,
                   textAlign: TextAlign.center,
                   decoration: const InputDecoration(hintText: "Password"),
                   controller: _passwordController,
