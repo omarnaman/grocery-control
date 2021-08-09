@@ -25,6 +25,7 @@ dependencies:
     sdk: flutter
   firebase_core:
   firebase_auth: 
+  firebase_auth_web:
   cloud_firestore:
   lint:
 
