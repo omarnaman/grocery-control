@@ -271,11 +271,6 @@ class _HomeState extends State<Home> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.navigation),
-        backgroundColor: Colors.purple,
-      ),
     );
   }
 }
