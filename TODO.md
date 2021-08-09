@@ -5,11 +5,12 @@
 ## Groups
 - [ ] Group Sharing
 - [x] Group Renaming
+- [ ] Group Creation
 ## Items
 - [ ] More item details
 - [ ] Auto completion when adding items
 - [x] Add Checked filter
-- [ ] Add Sorting (Sorting and filtering are not really supporting by firestore)
+- [ ] Add Sorting (Sorting and filtering are not really supported by firestore)
 - [ ] Support sorting by fields other than name 
 ## UI
 - [ ] Separate user creation from logging in (allows for setting other profile parameters)
@@ -17,11 +18,10 @@
 - [ ] Colors
 - [ ] Main App Icon
 ## Web
-- [ ] Export app to Web
+- [x] Export app to Web
 ## Tests
 - [ ] Add Item
 - [ ] Change Group
 - [ ] Change Group Name
 - [ ] Sort Items
 - [ ] Check Item
-- [ ] 
