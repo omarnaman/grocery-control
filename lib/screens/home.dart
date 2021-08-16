@@ -148,21 +148,6 @@ class _HomeState extends State<Home> {
                   const SizedBox(
                     height: 30,
                   ),
-                  // Row(
-                  //   children: <Widget>[
-                  //     Text("Ascending order"),
-                  //     AqelCheckbox(
-                  //       value: _sortDirection == SortDirection.Ascending,
-                  //       onChanged: (newValue) {
-                  //         setState(() {
-                  //           _sortDirection = newValue
-                  //               ? SortDirection.Ascending
-                  //               : SortDirection.Decsending;
-                  //         });
-                  //       },
-                  //     ),
-                  //   ],
-                  // ),
                   Card(
                       margin: const EdgeInsets.all(1),
                       color: Theme.of(context).cardColor,
