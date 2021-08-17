@@ -40,9 +40,8 @@ class Database {
 
   Future<void> setLastGroup({String uid, GroupModel group}) async {
     try {
-      firestore.collection("users").doc(uid).update({
-        "last_group": firestore.collection("groups").doc(group.groupId)
-      });
+      firestore.collection("users").doc(uid).update(
+          {"last_group": firestore.collection("groups").doc(group.groupId)});
     } catch (e) {
       rethrow;
     }
@@ -96,29 +95,39 @@ class Database {
     }
   }
 
-  Future<void> addItem({String group, String name}) async {
+  Future<void> addItem({String group, String name, List<String> tags}) async {
     try {
-      firestore.collection("items").doc(group).collection("items").add({
-        "Name": name,
-        "Checked": false,
-      });
+      firestore
+          .collection("items")
+          .doc(group)
+          .collection("items")
+          .add({"Name": name, "Checked": false, "Tags": tags});
     } catch (e) {
       rethrow;
     }
   }
 
   Future<void> updateItem(
-      {String group, String itemId, String name, bool checked}) async {
+      {String group,
+      String itemId,
+      String name,
+      bool checked,
+      List<String> tags}) async {
     try {
+      Map<String, dynamic> doc = {};
+      doc["Name"] = name;
+      if (tags != null){
+        doc["Tags"] = tags;
+      }
+      if (checked != null) {
+        doc["Checked"] = checked;
+      }
       firestore
           .collection("items")
           .doc(group)
           .collection("items")
           .doc(itemId)
-          .update({
-        "Checked": checked,
-        "Name": name,
-      });
+          .update(doc);
     } catch (e) {
       rethrow;
     }

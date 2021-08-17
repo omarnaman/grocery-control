@@ -12,6 +12,8 @@
 - [x] Add Checked filter
 - [ ] Add Sorting (Sorting and filtering are not really supported by firestore)
 - [ ] Support sorting by fields other than name 
+- [x] Tag support
+- [ ] Search by Tag
 ## UI
 - [ ] Separate user creation from logging in (allows for setting other profile parameters)
 - [ ] Animations
