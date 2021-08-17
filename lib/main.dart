@@ -9,7 +9,7 @@ import 'package:grocery_control/services/auth.dart';
 import 'package:grocery_control/services/db.dart';
 import 'package:grocery_control/models/group.dart';
 
-void main() {
+Future main() async{
   runApp(App());
 }
 

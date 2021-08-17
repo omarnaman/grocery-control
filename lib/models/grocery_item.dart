@@ -5,19 +5,21 @@ class GroceryItemModel {
   String name;
   bool checked;
   String group;
+  List<String> tags;
 
-  GroceryItemModel({
-    this.itemId,
-    this.name,
-    this.checked,
-    this.group,
-  });
+  GroceryItemModel(
+      {this.itemId, this.name, this.checked, this.group, this.tags});
 
-  GroceryItemModel.fromDocumentSnapshot({DocumentSnapshot documentSnapshot, String group}) {
+  GroceryItemModel.fromDocumentSnapshot(
+      {DocumentSnapshot documentSnapshot, String group}) {
     itemId = documentSnapshot.id;
     name = documentSnapshot.data()['Name'] as String;
     checked = documentSnapshot.data()['Checked'] as bool;
     group = group;
+    if (documentSnapshot.data().containsKey("Tags")) {
+      tags = List.from(documentSnapshot.data()['Tags']);
+    } else {
+      tags = [];
+    }
   }
-
 }
