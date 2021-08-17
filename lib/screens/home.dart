@@ -228,8 +228,8 @@ class _HomeState extends State<Home> {
                     child: TextFormField(
                       key: const ValueKey("addTagField"),
                       controller: _tagsController,
-                      decoration:
-                          const InputDecoration(hintText: "Comma separated tags"),
+                      decoration: const InputDecoration(
+                          hintText: "Comma separated tags"),
                     ),
                   ),
                   IconButton(
@@ -237,7 +237,7 @@ class _HomeState extends State<Home> {
                     icon: const Icon(Icons.add),
                     onPressed: () {
                       if (_tagsController.text != "") {
-                        List<String> tags = _tagsController.text.split(",");
+                        List<String> tags = _tagsController.text.split(",").map((e) => e.trim()).toList();
                         setState(() {
                           _newTagList.addAll(tags);
                           _tagsController.clear();
