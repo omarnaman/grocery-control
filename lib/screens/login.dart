@@ -19,6 +19,19 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  FocusNode _passwordFocus;
+  @override
+  void initState() {
+    super.initState();
+    _passwordFocus = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _passwordFocus.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,12 +45,22 @@ class _LoginState extends State<Login> {
                 TextFormField(
                   key: const ValueKey("username"),
                   textAlign: TextAlign.center,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) {
+                    _passwordFocus.requestFocus();
+                  },
+                  autofocus: true,
                   decoration: const InputDecoration(hintText: "Username"),
                   controller: _emailController,
                 ),
                 TextFormField(
                   key: const ValueKey("password"),
                   obscureText: true,
+                  focusNode: _passwordFocus,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) async {
+                    _login();
+                  },
                   textAlign: TextAlign.center,
                   decoration: const InputDecoration(hintText: "Password"),
                   controller: _passwordController,
@@ -47,22 +70,7 @@ class _LoginState extends State<Login> {
                 ),
                 ElevatedButton(
                   key: const ValueKey("signIn"),
-                  onPressed: () async {
-                    final String retVal = await Auth(auth: widget.auth).signIn(
-                      email: _emailController.text,
-                      password: _passwordController.text,
-                    );
-                    if (retVal == "Success") {
-                      _emailController.clear();
-                      _passwordController.clear();
-                    } else {
-                      Scaffold.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(retVal),
-                        ),
-                      );
-                    }
-                  },
+                  onPressed: () async {_login();},
                   child: const Text("Sign In"),
                 ),
                 TextButton(
@@ -92,5 +100,22 @@ class _LoginState extends State<Login> {
         ),
       ),
     );
+  }
+
+  _login() async {
+    final String retVal = await Auth(auth: widget.auth).signIn(
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
+    if (retVal == "Success") {
+      _emailController.clear();
+      _passwordController.clear();
+    } else {
+      Scaffold.of(context).showSnackBar(
+        SnackBar(
+          content: Text(retVal),
+        ),
+      );
+    }
   }
 }

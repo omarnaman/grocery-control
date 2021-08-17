@@ -197,6 +197,9 @@ class _HomeState extends State<Home> {
                     child: TextFormField(
                       key: const ValueKey("addField"),
                       controller: _itemController,
+                      onFieldSubmitted: (_) {
+                        _saveItem();
+                      },
                       decoration:
                           const InputDecoration(hintText: "New Item Name"),
                     ),
@@ -207,25 +210,7 @@ class _HomeState extends State<Home> {
                         ? const Icon(Icons.save)
                         : const Icon(Icons.add),
                     onPressed: () {
-                      if (_itemController.text != "") {
-                        setState(() {
-                          if (_isItemSelected) {
-                            Database(firestore: widget.firestore).updateItem(
-                                group: _group.groupId,
-                                name: _itemController.text,
-                                itemId: _selectedKey,
-                                tags: _newTagList);
-                          } else {
-                            Database(firestore: widget.firestore).addItem(
-                                group: _group.groupId,
-                                name: _itemController.text,
-                                tags: _newTagList);
-                            _itemController.clear();
-                            _newTagList.clear();
-                            _tagsController.clear();
-                          }
-                        });
-                      }
+                      _saveItem();
                     },
                   ),
                 ],
@@ -243,8 +228,8 @@ class _HomeState extends State<Home> {
                     child: TextFormField(
                       key: const ValueKey("addTagField"),
                       controller: _tagsController,
-                      decoration:
-                          const InputDecoration(hintText: "Comma separated tags"),
+                      decoration: const InputDecoration(
+                          hintText: "Comma separated tags"),
                     ),
                   ),
                   IconButton(
@@ -252,7 +237,7 @@ class _HomeState extends State<Home> {
                     icon: const Icon(Icons.add),
                     onPressed: () {
                       if (_tagsController.text != "") {
-                        List<String> tags = _tagsController.text.split(",");
+                        List<String> tags = _tagsController.text.split(",").map((e) => e.trim()).toList();
                         setState(() {
                           _newTagList.addAll(tags);
                           _tagsController.clear();
@@ -334,5 +319,27 @@ class _HomeState extends State<Home> {
         ],
       ),
     );
+  }
+
+  _saveItem() {
+    if (_itemController.text != "") {
+      setState(() {
+        if (_isItemSelected) {
+          Database(firestore: widget.firestore).updateItem(
+              group: _group.groupId,
+              name: _itemController.text,
+              itemId: _selectedKey,
+              tags: _newTagList);
+        } else {
+          Database(firestore: widget.firestore).addItem(
+              group: _group.groupId,
+              name: _itemController.text,
+              tags: _newTagList);
+          _itemController.clear();
+          _newTagList.clear();
+          _tagsController.clear();
+        }
+      });
+    }
   }
 }
