@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:grocery_control/models/grocery_item.dart';
@@ -151,6 +152,39 @@ class _HomeState extends State<Home> {
                         );
                       }
                     },
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                          onPressed: () => {
+                                showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return TextInputDialog(
+                                        okOption: "Create",
+                                        title: "Create New Group",
+                                        hint: "New Group Name",
+                                      );
+                                    }).then((value) async {
+                                  if (value != null) {
+                                    HttpsCallable callable = FirebaseFunctions
+                                        .instance
+                                        .httpsCallable("CreateGroup");
+                                    HttpsCallableResult result = await callable
+                                        .call({"groupName": value});
+                                    if (result.data.err) {
+                                      final snackBar = SnackBar(content: Text('Error'));
+                                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                    }
+                                    else {
+                                      final snackBar = SnackBar(content: Text('$value Created'));
+                                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                    }
+                                  }
+                                })
+                              },
+                          icon: Icon(Icons.add))
+                    ],
                   ),
                   const SizedBox(
                     height: 30,
