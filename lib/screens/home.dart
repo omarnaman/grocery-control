@@ -237,7 +237,10 @@ class _HomeState extends State<Home> {
                     icon: const Icon(Icons.add),
                     onPressed: () {
                       if (_tagsController.text != "") {
-                        List<String> tags = _tagsController.text.split(",").map((e) => e.trim()).toList();
+                        List<String> tags = _tagsController.text
+                            .split(",")
+                            .map((e) => e.trim())
+                            .toList();
                         setState(() {
                           _newTagList.addAll(tags);
                           _tagsController.clear();
