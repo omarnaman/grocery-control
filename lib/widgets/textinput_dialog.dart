@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 class TextInputDialog extends StatefulWidget {
   final String title;
   final String hint;
-  TextInputDialog({Key key, this.hint, this.title}) : super(key: key);
+  final String okOption;
+  TextInputDialog({Key key, this.hint, this.title, this.okOption}) : super(key: key);
 
   @override
   _TextInputDialogState createState() => _TextInputDialogState();
@@ -26,7 +27,7 @@ class _TextInputDialogState extends State<TextInputDialog> {
             onPressed: () {
               Navigator.of(context).pop(_textEditingController.text);
             },
-            child: Text("Change")),
+            child: Text(widget.okOption)),
         TextButton(
             onPressed: () {
               Navigator.of(context).pop();

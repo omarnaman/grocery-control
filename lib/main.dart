@@ -1,15 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+
+import 'package:flutter/material.dart';
 import 'package:grocery_control/screens/home.dart';
 import 'package:grocery_control/screens/login.dart';
 import 'package:grocery_control/services/auth.dart';
 import 'package:grocery_control/services/db.dart';
 import 'package:grocery_control/models/group.dart';
 
-Future main() async{
+Future<void> main() async{
   runApp(App());
 }
 

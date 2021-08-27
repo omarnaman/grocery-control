@@ -5,7 +5,7 @@
 ## Groups
 - [ ] Group Sharing
 - [x] Group Renaming
-- [ ] Group Creation
+- [x] Group Creation
 ## Items
 - [ ] More item details
 - [ ] Auto completion when adding items
@@ -19,6 +19,7 @@
 - [ ] Animations
 - [ ] Colors
 - [ ] Main App Icon
+- [ ] Prettify group creation
 ## Web
 - [x] Export app to Web
 ## Tests
