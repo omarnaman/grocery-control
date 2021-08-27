@@ -58,6 +58,7 @@ class _HomeState extends State<Home> {
                           return TextInputDialog(
                             title: "Edit Group Name",
                             hint: "New Group Name",
+                            okOption: "Change",
                           );
                         }).then((value) {
                       if (value != null) {
