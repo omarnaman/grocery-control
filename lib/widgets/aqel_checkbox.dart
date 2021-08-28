@@ -6,8 +6,8 @@ class AqelCheckbox extends StatefulWidget {
   final double iconSize;
   final Color selectedColor;
   final Color selectedIconColor;
-  final Function onChanged;
-  AqelCheckbox({this.value, this.size, this.iconSize, this.selectedColor, this.selectedIconColor, this.onChanged});
+  final Function(bool) onChanged;
+  AqelCheckbox({Key key, this.value, this.size, this.iconSize, this.selectedColor, this.selectedIconColor, this.onChanged}): super(key: key);
 
   @override
   _AqelCheckboxState createState() => _AqelCheckboxState();
@@ -19,8 +19,8 @@ class _AqelCheckboxState extends State<AqelCheckbox> {
 
   @override
   void initState() {
-    _isSelected = widget.value ?? false;
     super.initState();
+    _isSelected = widget.value ?? false;
   }
 
   @override
@@ -38,7 +38,7 @@ class _AqelCheckboxState extends State<AqelCheckbox> {
         decoration: BoxDecoration(
           color: _isSelected ? widget.selectedColor ?? Theme.of(context).accentColor : Colors.transparent,
           borderRadius: BorderRadius.circular(5.0),
-          border: _isSelected ? null : Border.all(
+          border: Border.all(
             color: Colors.grey,
             width: 2.0,
           )
