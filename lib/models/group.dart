@@ -14,8 +14,8 @@ class GroupModel {
 
   GroupModel.fromDocumentSnapshot({DocumentSnapshot documentSnapshot}) {
     groupId = documentSnapshot.id;
-    name = documentSnapshot.data()['name'] as String;
-    owner = documentSnapshot.data()['owner'] as String;
+    name = (documentSnapshot.data() as Map<String, dynamic>)['name'] as String;
+    owner = (documentSnapshot.data() as Map<String, dynamic>)['owner'] as String;
 
   }
 

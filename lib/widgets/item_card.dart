@@ -87,10 +87,9 @@ class _GroceryItemCardState extends State<GroceryItemCard> {
                   ),
                 ),
               ),
-              Checkbox(
+              AqelCheckbox(
                 value: widget.item.checked,
                 onChanged: (newValue) {
-                  setState(() {});
                   Database(firestore: widget.firestore).updateItem(
                     group: widget.item.group,
                     name: widget.item.name,

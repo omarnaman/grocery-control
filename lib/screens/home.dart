@@ -323,6 +323,7 @@ class _HomeState extends State<Home> {
                     itemCount: snapshot.data.length,
                     itemBuilder: (_, index) {
                       return GroceryItemCard(
+                        key: UniqueKey(),
                         firestore: widget.firestore,
                         item: snapshot.data[index],
                         group: _group.groupId,

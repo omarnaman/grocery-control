@@ -13,11 +13,11 @@ class GroceryItemModel {
   GroceryItemModel.fromDocumentSnapshot(
       {DocumentSnapshot documentSnapshot, String group}) {
     itemId = documentSnapshot.id;
-    name = documentSnapshot.data()['Name'] as String;
-    checked = documentSnapshot.data()['Checked'] as bool;
+    name = (documentSnapshot.data() as Map<String, dynamic>) ['Name'] as String;
+    checked = (documentSnapshot.data() as Map<String, dynamic>)['Checked'] as bool;
     group = group;
-    if (documentSnapshot.data().containsKey("Tags")) {
-      tags = List.from(documentSnapshot.data()['Tags']);
+    if ( (documentSnapshot.data() as Map<String, dynamic>).containsKey("Tags")) {
+      tags = List.from( (documentSnapshot.data() as Map<String, dynamic>)['Tags']);
     } else {
       tags = [];
     }
