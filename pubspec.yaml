@@ -29,6 +29,7 @@ dependencies:
   cloud_functions:
   cloud_firestore:
   qr_code_scanner:
+  qr_flutter:
   lint:
 
   # The following adds the Cupertino Icons font to your application.
