@@ -3,7 +3,7 @@
 ## User Creation
 - [x] Create new group with registration
 ## Groups
-- [ ] Group Sharing
+- [x] Group Sharing
 - [x] Group Renaming
 - [x] Group Creation
 ## Items
