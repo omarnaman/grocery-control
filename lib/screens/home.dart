@@ -11,6 +11,7 @@ import 'package:grocery_control/widgets/aqel_checkbox.dart';
 import 'package:grocery_control/widgets/item_card.dart';
 import 'package:grocery_control/widgets/tag_list.dart';
 import 'package:grocery_control/widgets/textinput_dialog.dart';
+import 'package:grocery_control/widgets/group_qrcode.dart';
 import 'package:grocery_control/screens/qr_scanner.dart';
 
 class Home extends StatefulWidget {
@@ -211,6 +212,20 @@ class _HomeState extends State<Home> {
                               ),
                             ],
                           ))),
+                  IconButton(
+                      onPressed: () {
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return GroupQRCodeDialog(
+                                groupModel: _group,
+                              );
+                            });
+                      },
+                      icon: Icon(Icons.qr_code)),
+                  const SizedBox(
+                    height: 30,
+                  ),
                   IconButton(
                       onPressed: () async {
                         Map<String, dynamic> codeData =
