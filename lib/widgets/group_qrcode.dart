@@ -22,6 +22,8 @@ class _GroupQRCodeDialogState extends State<GroupQRCodeDialog> {
           data: _getGroupJSON(this.widget.groupModel),
           version: QrVersions.auto,
           size: 320,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
         ),
       ),
       actions: <Widget>[
@@ -36,8 +38,8 @@ class _GroupQRCodeDialogState extends State<GroupQRCodeDialog> {
 
   String _getGroupJSON(GroupModel groupModel) {
     var result = '''{
-      "Id": ${groupModel.groupId},
-      "Action": "Join group ${groupModel.name}",
+      "Id": "${groupModel.groupId}",
+      "Action": "Join group ${groupModel.name}"
     }''';
     return result;
   }
