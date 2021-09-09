@@ -35,10 +35,10 @@ class _GroupQRCodeDialogState extends State<GroupQRCodeDialog> {
   }
 
   String _getGroupJSON(GroupModel groupModel) {
-    var result = {
-      "Id": groupModel.groupId,
+    var result = '''{
+      "Id": ${groupModel.groupId},
       "Action": "Join group ${groupModel.name}",
-    };
-    return result.toString();
+    }''';
+    return result;
   }
 }
