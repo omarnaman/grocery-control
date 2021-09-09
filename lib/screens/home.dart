@@ -11,6 +11,7 @@ import 'package:grocery_control/widgets/aqel_checkbox.dart';
 import 'package:grocery_control/widgets/item_card.dart';
 import 'package:grocery_control/widgets/tag_list.dart';
 import 'package:grocery_control/widgets/textinput_dialog.dart';
+import 'package:grocery_control/screens/qr_scanner.dart';
 
 class Home extends StatefulWidget {
   final FirebaseAuth auth;
@@ -173,12 +174,15 @@ class _HomeState extends State<Home> {
                                     HttpsCallableResult result = await callable
                                         .call({"groupName": value});
                                     if (result.data.err) {
-                                      final snackBar = SnackBar(content: Text('Error'));
-                                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                                    }
-                                    else {
-                                      final snackBar = SnackBar(content: Text('$value Created'));
-                                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                      final snackBar =
+                                          SnackBar(content: Text('Error'));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(snackBar);
+                                    } else {
+                                      final snackBar = SnackBar(
+                                          content: Text('$value Created'));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(snackBar);
                                     }
                                   }
                                 })
@@ -207,6 +211,20 @@ class _HomeState extends State<Home> {
                               ),
                             ],
                           ))),
+                  IconButton(
+                      onPressed: () async {
+                        Map<String, dynamic> codeData =
+                            await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => QRCodeScanner()),
+                        );
+                        if (codeData == null) {
+                          return;
+                        }
+                        HttpsCallable callable = FirebaseFunctions.instance
+                            .httpsCallable("JoinGroup");
+                        await callable.call(codeData);
+                      },
+                      icon: Icon(Icons.qr_code_scanner)),
                 ],
               ))),
       body: Column(
