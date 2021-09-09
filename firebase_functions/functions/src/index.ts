@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+/* eslint-disable object-curly-spacing */
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 admin.initializeApp();
@@ -17,10 +18,11 @@ export const SignUp = functions.auth.user().onCreate((user) => {
     admin.firestore().collection("items").doc(groupId);
   const groupName = "Default Group";
 
-  groupDocumentRef.create({owner: userId, name: groupName});
+  groupDocumentRef.create({ owner: userId, name: groupName });
   userDocumentRef.create({
     last_group: groupDocumentRef,
-    group_ref_array: [groupDocumentRef]});
+    group_ref_array: [groupDocumentRef],
+  });
   itemsDocumentRef.create({});
 });
 
@@ -45,15 +47,64 @@ export const CreateGroup = functions.https.onCall((data, context) => {
   return userDocumentRef.get().then((doc) => {
     let groups = doc.data()?.group_ref_array || null;
     if (groups == null) {
-      groups = [groupName];
+      groups = [groupDocumentRef];
     } else {
-      groups = groups.concat(groupDocumentRef);
+      if (!groups.includes(groupDocumentRef)) {
+        groups = groups.concat(groupDocumentRef);
+      }
     }
     userDocumentRef.update({
       group_ref_array: groups,
     });
-    return {text: "Done", id: groupDocumentRef};
+    return { text: "Done", id: groupDocumentRef };
   }).catch((err) => {
-    return {error: err};
+    return { error: err };
+  });
+});
+
+
+export const JoinGroup = functions.https.onCall((data, context) => {
+  if (context == null) {
+    return;
+  }
+
+  if (context.auth == null) {
+    return;
+  }
+  const userId = context.auth?.uid;
+  const groupId = data.Id;
+  const groupDocumentRef =
+    admin.firestore().collection("groups").doc(groupId);
+  const userDocumentRef =
+    admin.firestore().collection("users").doc(userId);
+
+  return userDocumentRef.get().then((doc) => {
+    let groups = doc.data()?.group_ref_array || null;
+    if (groups == null) {
+      groups = [groupDocumentRef];
+    } else {
+      if (!groups.includes(groupDocumentRef)) {
+        groups = groups.concat(groupDocumentRef);
+        groupDocumentRef.get().then((grpDoc) => {
+          let members = grpDoc.data()?.members || null;
+          if (members == null) {
+            members = [userId];
+          } else {
+            if (!members.includes(userId)) {
+              members = members.concat(userId);
+            }
+          }
+          groupDocumentRef.update({
+            members: members,
+          });
+        });
+      }
+    }
+    userDocumentRef.update({
+      group_ref_array: groups,
+    });
+    return { text: "Done", id: groupDocumentRef };
+  }).catch((err) => {
+    return { error: err };
   });
 });
