@@ -35,7 +35,9 @@ class _HomeState extends State<Home> {
   bool _isItemSelected = false;
   String _selectedKey = '';
   ScrollController _scrollController;
+  double _height;
   List<String> _newTagList = [];
+  bool _visibleHeader = true;
   List<GroceryItemCard> _itemList = [];
   @override
   void initState() {
@@ -44,6 +46,30 @@ class _HomeState extends State<Home> {
     _group = widget.group;
     _isOwner = _group.owner == widget.auth.currentUser.uid;
     _newTagList = [];
+    _scrollController.addListener(() {
+      if (_isItemSelected) {
+        if (!_visibleHeader) {
+          setState(() {
+            _visibleHeader = true;
+          });
+        } 
+        return;
+      }
+    if (_scrollController.position.pixels == _scrollController.position.minScrollExtent) {
+      if(_visibleHeader != true){
+        _visibleHeader = true ;
+        setState((){});
+      }
+    } else if (_scrollController.position.pixels > _height * 0.5 && _visibleHeader == true) {
+      if (_visibleHeader != false) {
+        _visibleHeader = false;
+        setState(() {});
+      }
+    }
+
+  });
+  }
+
   @override
   void dispose() {
     super.dispose();
@@ -53,6 +79,7 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    _height = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: const Text("Grocery Control"),
@@ -255,86 +282,111 @@ class _HomeState extends State<Home> {
           const SizedBox(
             height: 20,
           ),
-          Text(
-            "Add item to ${_group.name}:",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Card(
-            margin:
-                const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 10),
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      key: const ValueKey("addField"),
-                      controller: _itemController,
-                      onFieldSubmitted: (_) {
-                        _saveItem();
-                      },
-                      decoration:
-                          const InputDecoration(hintText: "New Item Name"),
-                    ),
-                  ),
-                  IconButton(
-                    key: const ValueKey("addButton"),
-                    icon: _isItemSelected
-                        ? const Icon(Icons.save)
-                        : const Icon(Icons.add),
-                    onPressed: () {
-                      _saveItem();
-                    },
-                  ),
-                ],
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: _isVisible() ? 50 : 0,
+            child: Text(
+              "Add item to ${_group.name}:",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          Card(
-            margin:
-                const EdgeInsets.only(top: 0, left: 20, right: 20, bottom: 20),
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      key: const ValueKey("addTagField"),
-                      controller: _tagsController,
-                      decoration: const InputDecoration(
-                          hintText: "Comma separated tags"),
-                    ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: _isVisible() ? _height * 0.1 : 0,
+            child: Visibility(
+              visible: _isVisible(),
+              child: Card(
+            
+                margin:
+                    const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 10),
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          key: const ValueKey("addField"),
+                          controller: _itemController,
+                          onFieldSubmitted: (_) {
+                            _saveItem();
+                          },
+                          decoration:
+                              const InputDecoration(hintText: "New Item Name"),
+                        ),
+                      ),
+                      IconButton(
+                        key: const ValueKey("addButton"),
+                        icon: _isItemSelected
+                            ? const Icon(Icons.save)
+                            : const Icon(Icons.add),
+                        onPressed: () {
+                          _saveItem();
+                        },
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    key: const ValueKey("addTagButton"),
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      if (_tagsController.text != "") {
-                        List<String> tags = _tagsController.text
-                            .split(",")
-                            .map((e) => e.trim())
-                            .toList();
-                        setState(() {
-                          _newTagList.addAll(tags);
-                          _tagsController.clear();
-                        });
-                      }
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-          TagList(
-            tags: _newTagList,
-            onTagDelete: (int index) {
-              setState(() {
-                _newTagList.removeAt(index);
-              });
-            },
+
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: _isVisible() ? _height * 0.1 : 0,
+            child: Visibility(
+              visible: _isVisible(),
+              child: Card(
+                
+                margin:
+                    const EdgeInsets.only(top: 0, left: 20, right: 20, bottom: 20),
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          key: const ValueKey("addTagField"),
+                          controller: _tagsController,
+                          decoration: const InputDecoration(
+                              hintText: "Comma separated tags"),
+                        ),
+                      ),
+                      IconButton(
+                        key: const ValueKey("addTagButton"),
+                        icon: const Icon(Icons.add),
+                        onPressed: () {
+                          if (_tagsController.text != "") {
+                            List<String> tags = _tagsController.text
+                                .split(",")
+                                .map((e) => e.trim())
+                                .toList();
+                            setState(() {
+                              _newTagList.addAll(tags);
+                              _tagsController.clear();
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: _isVisible() ? 10 : 0,
+            child: TagList(
+              tags: _newTagList,
+              onTagDelete: (int index) {
+                setState(() {
+                  _newTagList.removeAt(index);
+                });
+              },
+            ),
           ),
           const SizedBox(
             height: 20,
