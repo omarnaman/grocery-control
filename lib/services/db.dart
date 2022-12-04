@@ -48,19 +48,16 @@ class Database {
   }
 
   Stream<List<GroceryItemModel>> streamItems(
-      {String group, SortDirection sortDirection, bool filterChecked}) {
+      {String group, SortDirection sortDirection}) {
     try {
       var itemsCollection = firestore
           .collection("items")
           .doc(group)
           .collection("items")
           .where("Name", isNotEqualTo: null);
-      if (false && sortDirection != null) {
+      if (sortDirection != null) {
         itemsCollection = itemsCollection.orderBy("Name",
             descending: sortDirection == SortDirection.Decsending);
-      }
-      if (filterChecked) {
-        itemsCollection = itemsCollection.where("Checked", isNotEqualTo: true);
       }
       return itemsCollection.snapshots().map((query) {
         final List<GroceryItemModel> retVal = <GroceryItemModel>[];

@@ -355,7 +355,10 @@ class _HomeState extends State<Home> {
                   return ListView.builder(
                     itemCount: snapshot.data.length,
                     itemBuilder: (_, index) {
-                      return GroceryItemCard(
+                      if (_filterChecked && snapshot.data[index].checked) {
+                        return SizedBox.shrink();
+                      }
+                      var card = GroceryItemCard(
                         key: UniqueKey(),
                         firestore: widget.firestore,
                         item: snapshot.data[index],
@@ -378,6 +381,7 @@ class _HomeState extends State<Home> {
                           });
                         },
                       );
+                      return card;
                     },
                   );
                 } else {
