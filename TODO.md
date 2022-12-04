@@ -10,7 +10,7 @@
 - [ ] More item details
 - [ ] Auto completion when adding items
 - [x] Add Checked filter
-- [ ] Add Sorting (Sorting and filtering are not really supported by firestore)
+- [x] Add Sorting (Sorting and filtering are not really supported by firestore)
 - [ ] Support sorting by fields other than name 
 - [x] Tag support
 - [ ] Search by Tag
