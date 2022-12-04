@@ -490,4 +490,7 @@ class _HomeState extends State<Home> {
       });
     }
   }
+  bool _isVisible() {
+    return _isItemSelected || _visibleHeader;
+  }
 }
