@@ -34,13 +34,21 @@ class _HomeState extends State<Home> {
   bool _isOwner = false;
   bool _isItemSelected = false;
   String _selectedKey = '';
+  ScrollController _scrollController;
   List<String> _newTagList = [];
+  List<GroceryItemCard> _itemList = [];
   @override
   void initState() {
     super.initState();
+    _scrollController = new ScrollController();
     _group = widget.group;
     _isOwner = _group.owner == widget.auth.currentUser.uid;
     _newTagList = [];
+  @override
+  void dispose() {
+    super.dispose();
+    _scrollController.dispose();
+    _scrollController.removeListener(() { });
   }
 
   @override
@@ -342,18 +350,20 @@ class _HomeState extends State<Home> {
             child: StreamBuilder(
               stream: Database(firestore: widget.firestore).streamItems(
                   group: _group.groupId,
-                  sortDirection: _sortDirection,
-                  filterChecked: _filterChecked),
+                  sortDirection: _sortDirection),
               builder: (BuildContext context,
                   AsyncSnapshot<List<GroceryItemModel>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
+                  _itemList.clear();
                   if (snapshot.data == null || snapshot.data.isEmpty) {
                     return const Center(
                       child: Text("You don't have any unchecked items"),
                     );
                   }
                   return ListView.builder(
+                    key: PageStorageKey("itemList"),
                     itemCount: snapshot.data.length,
+                    controller: _scrollController,
                     itemBuilder: (_, index) {
                       if (_filterChecked && snapshot.data[index].checked) {
                         return SizedBox.shrink();
@@ -381,10 +391,20 @@ class _HomeState extends State<Home> {
                           });
                         },
                       );
+                      _itemList.add(card);
                       return card;
                     },
                   );
-                } else {
+                
+                } 
+                else if(snapshot.connectionState == ConnectionState.waiting) {
+                  return ListView(
+                    key: PageStorageKey("itemList"),
+                    controller: _scrollController,
+                    children: _itemList,
+                  );
+                }
+                else {
                   return const Center(
                     child: Text("loading..."),
                   );
