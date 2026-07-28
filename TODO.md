@@ -8,7 +8,7 @@
 - [x] Group Creation
 ## Items
 - [ ] More item details
-- [ ] Auto completion when adding items
+- [x] Auto completion when adding items
 - [x] Add Checked filter
 - [x] Add Sorting (Sorting and filtering are not really supported by firestore)
 - [ ] Support sorting by fields other than name 

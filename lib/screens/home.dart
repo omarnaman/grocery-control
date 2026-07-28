@@ -6,6 +6,7 @@ import 'package:grocery_control/models/grocery_item.dart';
 import 'package:grocery_control/models/group.dart';
 import 'package:grocery_control/services/auth.dart';
 import 'package:grocery_control/services/db.dart';
+import 'package:grocery_control/services/grocery_catalog.dart';
 import 'package:grocery_control/utils/constants.dart';
 import 'package:grocery_control/widgets/aqel_checkbox.dart';
 import 'package:grocery_control/widgets/item_card.dart';
@@ -32,6 +33,8 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final TextEditingController _itemController = TextEditingController();
   final TextEditingController _tagsController = TextEditingController();
+  final FocusNode _itemFocusNode = FocusNode();
+  final GroceryCatalog _groceryCatalog = GroceryCatalog();
   late GroupModel _group;
   SortDirection _sortDirection = SortDirection.Ascending;
   bool _filterChecked = false;
@@ -43,6 +46,7 @@ class _HomeState extends State<Home> {
   List<String> _newTagList = [];
   bool _visibleHeader = true;
   List<GroceryItemCard> _itemList = [];
+  List<String> _itemHistory = [];
   @override
   void initState() {
     super.initState();
@@ -50,6 +54,9 @@ class _HomeState extends State<Home> {
     _group = widget.group;
     _isOwner = _group.owner == widget.auth.currentUser?.uid;
     _newTagList = [];
+    _groceryCatalog.load().then((_) {
+      if (mounted) setState(() {});
+    });
     _scrollController.addListener(() {
       if (_isItemSelected) {
         if (!_visibleHeader) {
@@ -78,6 +85,9 @@ class _HomeState extends State<Home> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _itemController.dispose();
+    _tagsController.dispose();
+    _itemFocusNode.dispose();
     super.dispose();
   }
 
@@ -313,14 +323,60 @@ class _HomeState extends State<Home> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: TextFormField(
-                          key: const ValueKey("addField"),
-                          controller: _itemController,
-                          onFieldSubmitted: (_) {
-                            _saveItem();
+                        child: RawAutocomplete<String>(
+                          textEditingController: _itemController,
+                          focusNode: _itemFocusNode,
+                          optionsBuilder: (TextEditingValue textEditingValue) {
+                            return _groceryCatalog.suggest(
+                              textEditingValue.text,
+                              history: _itemHistory,
+                            );
                           },
-                          decoration:
-                              const InputDecoration(hintText: "New Item Name"),
+                          onSelected: (String selection) {
+                            _itemController.text = selection;
+                            _itemController.selection =
+                                TextSelection.collapsed(
+                                    offset: selection.length);
+                          },
+                          fieldViewBuilder: (context, textEditingController,
+                              focusNode, onFieldSubmitted) {
+                            return TextFormField(
+                              key: const ValueKey("addField"),
+                              controller: textEditingController,
+                              focusNode: focusNode,
+                              onFieldSubmitted: (_) {
+                                onFieldSubmitted();
+                                _saveItem();
+                              },
+                              decoration: const InputDecoration(
+                                  hintText: "New Item Name"),
+                            );
+                          },
+                          optionsViewBuilder: (context, onSelected, options) {
+                            return Align(
+                              alignment: Alignment.topLeft,
+                              child: Material(
+                                elevation: 4.0,
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                      maxHeight: 240, maxWidth: 400),
+                                  child: ListView.builder(
+                                    padding: EdgeInsets.zero,
+                                    shrinkWrap: true,
+                                    itemCount: options.length,
+                                    itemBuilder: (context, index) {
+                                      final option = options.elementAt(index);
+                                      return ListTile(
+                                        dense: true,
+                                        title: Text(option),
+                                        onTap: () => onSelected(option),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       IconButton(
@@ -411,6 +467,14 @@ class _HomeState extends State<Home> {
                 if (snapshot.connectionState == ConnectionState.active) {
                   _itemList.clear();
                   final items = snapshot.data;
+                  if (items != null && items.isNotEmpty) {
+                    _itemHistory = items
+                        .map((e) => e.name)
+                        .where((name) => name.trim().isNotEmpty)
+                        .toList();
+                  } else {
+                    _itemHistory = [];
+                  }
                   if (items == null || items.isEmpty) {
                     return const Center(
                       child: Text("You don't have any unchecked items"),
