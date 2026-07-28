@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class Tag extends StatefulWidget {
   final String content;
   final VoidCallback onDelete;
-  Tag({Key key, this.content, this.onDelete}) : super(key: key);
+  Tag({super.key, required this.content, required this.onDelete});
 
   @override
   _TagCardState createState() => _TagCardState();

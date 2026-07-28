@@ -9,8 +9,10 @@ import 'package:grocery_control/screens/login.dart';
 import 'package:grocery_control/services/auth.dart';
 import 'package:grocery_control/services/db.dart';
 import 'package:grocery_control/models/group.dart';
+import 'package:grocery_control/firebase_options.dart';
 
-Future<void> main() async{
+Future<void> main() async {
+  
   runApp(App());
 }
 
@@ -22,7 +24,7 @@ class App extends StatelessWidget {
       theme: ThemeData.dark(),
       home: FutureBuilder(
         // Initialize FlutterFire:
-        future: Firebase.initializeApp(),
+        future: Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
         builder: (context, snapshot) {
           // Check for errors
           if (snapshot.hasError) {
@@ -61,27 +63,29 @@ class _RootState extends State<Root> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
+    return StreamBuilder<User?>(
       stream: Auth(auth: _auth).user,
-      builder: (BuildContext context, AsyncSnapshot<User> snapshot) {
+      builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
-          if (snapshot.data?.uid == null) {
+          final user = snapshot.data;
+          if (user == null) {
             return Login(
               auth: _auth,
               firestore: _firestore,
             );
           } else {
-            return FutureBuilder(
+            return FutureBuilder<GroupModel>(
                 future: Database(firestore: _firestore)
-                    .getLastGroup(uid: _auth.currentUser.uid),
+                    .getLastGroup(uid: user.uid),
                 builder: (BuildContext context,
                     AsyncSnapshot<GroupModel> groupSnapshot) {
                   if (groupSnapshot.connectionState == ConnectionState.done) {
-                    if (groupSnapshot.data != null) {
+                    final group = groupSnapshot.data;
+                    if (group != null) {
                       return Home(
                           auth: _auth,
                           firestore: _firestore,
-                          group: groupSnapshot.data);
+                          group: group);
                     }
                     return const Scaffold(
                       body: Center(

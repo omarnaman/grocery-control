@@ -18,8 +18,12 @@ class Home extends StatefulWidget {
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
   final GroupModel group;
-  const Home({Key key, this.auth, this.firestore, this.group})
-      : super(key: key);
+  const Home({
+    super.key,
+    required this.auth,
+    required this.firestore,
+    required this.group,
+  });
 
   @override
   _HomeState createState() => _HomeState();
@@ -28,23 +32,23 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final TextEditingController _itemController = TextEditingController();
   final TextEditingController _tagsController = TextEditingController();
-  GroupModel _group;
+  late GroupModel _group;
   SortDirection _sortDirection = SortDirection.Ascending;
   bool _filterChecked = false;
   bool _isOwner = false;
   bool _isItemSelected = false;
   String _selectedKey = '';
-  ScrollController _scrollController;
-  double _height;
+  late ScrollController _scrollController;
+  late double _height;
   List<String> _newTagList = [];
   bool _visibleHeader = true;
   List<GroceryItemCard> _itemList = [];
   @override
   void initState() {
     super.initState();
-    _scrollController = new ScrollController();
+    _scrollController = ScrollController();
     _group = widget.group;
-    _isOwner = _group.owner == widget.auth.currentUser.uid;
+    _isOwner = _group.owner == widget.auth.currentUser?.uid;
     _newTagList = [];
     _scrollController.addListener(() {
       if (_isItemSelected) {
@@ -52,29 +56,29 @@ class _HomeState extends State<Home> {
           setState(() {
             _visibleHeader = true;
           });
-        } 
+        }
         return;
       }
-    if (_scrollController.position.pixels == _scrollController.position.minScrollExtent) {
-      if(_visibleHeader != true){
-        _visibleHeader = true ;
-        setState((){});
+      if (_scrollController.position.pixels ==
+          _scrollController.position.minScrollExtent) {
+        if (_visibleHeader != true) {
+          _visibleHeader = true;
+          setState(() {});
+        }
+      } else if (_scrollController.position.pixels > _height * 0.5 &&
+          _visibleHeader == true) {
+        if (_visibleHeader != false) {
+          _visibleHeader = false;
+          setState(() {});
+        }
       }
-    } else if (_scrollController.position.pixels > _height * 0.5 && _visibleHeader == true) {
-      if (_visibleHeader != false) {
-        _visibleHeader = false;
-        setState(() {});
-      }
-    }
-
-  });
+    });
   }
 
   @override
   void dispose() {
-    super.dispose();
     _scrollController.dispose();
-    _scrollController.removeListener(() { });
+    super.dispose();
   }
 
   @override
@@ -103,7 +107,7 @@ class _HomeState extends State<Home> {
                         Database(firestore: widget.firestore).updateGroupName(
                             group: _group,
                             newName: value.trim(),
-                            uid: widget.auth.currentUser.uid);
+                            uid: widget.auth.currentUser?.uid ?? '');
                         setState(() {});
                       }
                     });
@@ -129,18 +133,19 @@ class _HomeState extends State<Home> {
                   ),
                   FutureBuilder(
                     future: Database(firestore: widget.firestore)
-                        .streamGroups(uid: widget.auth.currentUser.uid),
+                        .streamGroups(uid: widget.auth.currentUser?.uid ?? ''),
                     builder: (BuildContext context,
                         AsyncSnapshot<List<GroupModel>> snapshot) {
                       if (snapshot.connectionState == ConnectionState.done) {
-                        if (snapshot.data.isEmpty) {
+                        final groups = snapshot.data;
+                        if (groups == null || groups.isEmpty) {
                           return const Center(
                             child: Text("No groups available"),
                           );
                         }
-                        if (snapshot.data.length == 1) {
+                        if (groups.length == 1) {
                           return Center(
-                            child: Text(snapshot.data.first.name),
+                            child: Text(groups.first.name),
                           );
                         }
                         return DropdownButton<GroupModel>(
@@ -162,22 +167,24 @@ class _HomeState extends State<Home> {
                           hint: Container(
                             child: Text(_group.name),
                           ),
-                          items: snapshot.data
-                              .map<DropdownMenuItem<GroupModel>>((value) {
+                          items: groups
+                              .map<DropdownMenuItem<GroupModel>>(
+                                  (GroupModel value) {
                             return DropdownMenuItem<GroupModel>(
                               value: value,
                               child: Text(value.name),
                             );
                           }).toList(),
                           isExpanded: true,
-                          onChanged: (GroupModel newValue) {
+                          onChanged: (GroupModel? newValue) {
                             setState(() {
+                              if (newValue == null) return;
                               _group = newValue;
                               _isOwner =
-                                  _group.owner == widget.auth.currentUser.uid;
+                                  _group.owner == widget.auth.currentUser?.uid;
                               Database(firestore: widget.firestore)
                                   .setLastGroup(
-                                      uid: widget.auth.currentUser.uid,
+                                      uid: widget.auth.currentUser?.uid ?? '',
                                       group: _group);
                             });
                             Navigator.pop(context);
@@ -263,8 +270,8 @@ class _HomeState extends State<Home> {
                   ),
                   IconButton(
                       onPressed: () async {
-                        Map<String, dynamic> codeData =
-                            await Navigator.of(context).push(
+                        final codeData = await Navigator.of(context).push<
+                            Map<String, dynamic>>(
                           MaterialPageRoute(builder: (_) => QRCodeScanner()),
                         );
                         if (codeData == null) {
@@ -299,9 +306,8 @@ class _HomeState extends State<Home> {
             child: Visibility(
               visible: _isVisible(),
               child: Card(
-            
-                margin:
-                    const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 10),
+                margin: const EdgeInsets.only(
+                    top: 20, left: 20, right: 20, bottom: 10),
                 child: Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: Row(
@@ -332,16 +338,14 @@ class _HomeState extends State<Home> {
               ),
             ),
           ),
-
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             height: _isVisible() ? _height * 0.1 : 0,
             child: Visibility(
               visible: _isVisible(),
               child: Card(
-                
-                margin:
-                    const EdgeInsets.only(top: 0, left: 20, right: 20, bottom: 20),
+                margin: const EdgeInsets.only(
+                    top: 0, left: 20, right: 20, bottom: 20),
                 child: Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: Row(
@@ -401,29 +405,29 @@ class _HomeState extends State<Home> {
           Expanded(
             child: StreamBuilder(
               stream: Database(firestore: widget.firestore).streamItems(
-                  group: _group.groupId,
-                  sortDirection: _sortDirection),
+                  group: _group.groupId, sortDirection: _sortDirection),
               builder: (BuildContext context,
                   AsyncSnapshot<List<GroceryItemModel>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
                   _itemList.clear();
-                  if (snapshot.data == null || snapshot.data.isEmpty) {
+                  final items = snapshot.data;
+                  if (items == null || items.isEmpty) {
                     return const Center(
                       child: Text("You don't have any unchecked items"),
                     );
                   }
                   return ListView.builder(
                     key: PageStorageKey("itemList"),
-                    itemCount: snapshot.data.length,
+                    itemCount: items.length,
                     controller: _scrollController,
                     itemBuilder: (_, index) {
-                      if (_filterChecked && snapshot.data[index].checked) {
+                      if (_filterChecked && items[index].checked) {
                         return SizedBox.shrink();
                       }
                       var card = GroceryItemCard(
                         key: UniqueKey(),
                         firestore: widget.firestore,
-                        item: snapshot.data[index],
+                        item: items[index],
                         group: _group.groupId,
                         selectedKey: _selectedKey,
                         onSelectItem:
@@ -447,16 +451,14 @@ class _HomeState extends State<Home> {
                       return card;
                     },
                   );
-                
-                } 
-                else if(snapshot.connectionState == ConnectionState.waiting) {
+                } else if (snapshot.connectionState ==
+                    ConnectionState.waiting) {
                   return ListView(
                     key: PageStorageKey("itemList"),
                     controller: _scrollController,
                     children: _itemList,
                   );
-                }
-                else {
+                } else {
                   return const Center(
                     child: Text("loading..."),
                   );
@@ -490,6 +492,7 @@ class _HomeState extends State<Home> {
       });
     }
   }
+
   bool _isVisible() {
     return _isItemSelected || _visibleHeader;
   }

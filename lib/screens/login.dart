@@ -8,10 +8,10 @@ class Login extends StatefulWidget {
   final FirebaseFirestore firestore;
 
   const Login({
-    Key key,
-    @required this.auth,
-    @required this.firestore,
-  }) : super(key: key);
+    super.key,
+    required this.auth,
+    required this.firestore,
+  });
   @override
   _LoginState createState() => _LoginState();
 }
@@ -19,7 +19,7 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  FocusNode _passwordFocus;
+  late FocusNode _passwordFocus;
   @override
   void initState() {
     super.initState();
@@ -28,8 +28,8 @@ class _LoginState extends State<Login> {
 
   @override
   void dispose() {
-    super.dispose();
     _passwordFocus.dispose();
+    super.dispose();
   }
 
   @override
@@ -70,7 +70,9 @@ class _LoginState extends State<Login> {
                 ),
                 ElevatedButton(
                   key: const ValueKey("signIn"),
-                  onPressed: () async {_login();},
+                  onPressed: () async {
+                    _login();
+                  },
                   child: const Text("Sign In"),
                 ),
                 TextButton(

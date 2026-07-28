@@ -1,31 +1,31 @@
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 class QRCodeScanner extends StatefulWidget {
-  final Function(Map<String, dynamic>) onCodeDetected;
-  // final Function(String) codeParser;
-  QRCodeScanner({Key key, this.onCodeDetected}) : super(key: key);
+  final Function(Map<String, dynamic>)? onCodeDetected;
+  QRCodeScanner({super.key, this.onCodeDetected});
   @override
   State<StatefulWidget> createState() => _QRCodeScannerState();
 }
 
 class _QRCodeScannerState extends State<QRCodeScanner> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  Barcode result;
-  QRViewController controller;
+  Barcode? result;
+  QRViewController? controller;
 
   // In order to get hot reload to work we need to pause the camera if the platform
   // is android, or resume the camera if the platform is iOS.
   @override
   void reassemble() {
     super.reassemble();
-    if (Platform.isAndroid) {
-      controller.pauseCamera();
-    } else if (Platform.isIOS) {
-      controller.resumeCamera();
+    if (kIsWeb) return;
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      controller?.pauseCamera();
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      controller?.resumeCamera();
     }
   }
 
@@ -57,12 +57,11 @@ class _QRCodeScannerState extends State<QRCodeScanner> {
     controller.scannedDataStream.listen((scanData) {
       setState(() {
         result = scanData;
-        if (result != null) {
+        final code = scanData.code;
+        if (code != null) {
           controller.stopCamera();
-          Map<String, dynamic> resultData = jsonDecode(result.code);
-          if (this.widget.onCodeDetected != null) {
-            this.widget.onCodeDetected(resultData);
-          }
+          Map<String, dynamic> resultData = jsonDecode(code);
+          widget.onCodeDetected?.call(resultData);
           Navigator.of(context).pop(resultData);
         }
       });

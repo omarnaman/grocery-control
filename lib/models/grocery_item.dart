@@ -7,19 +7,25 @@ class GroceryItemModel {
   String group;
   List<String> tags;
 
-  GroceryItemModel(
-      {this.itemId, this.name, this.checked, this.group, this.tags});
+  GroceryItemModel({
+    required this.itemId,
+    required this.name,
+    required this.checked,
+    required this.group,
+    required this.tags,
+  });
 
-  GroceryItemModel.fromDocumentSnapshot(
-      {DocumentSnapshot documentSnapshot, String group}) {
-    itemId = documentSnapshot.id;
-    name = (documentSnapshot.data() as Map<String, dynamic>) ['Name'] as String;
-    checked = (documentSnapshot.data() as Map<String, dynamic>)['Checked'] as bool;
-    group = group;
-    if ( (documentSnapshot.data() as Map<String, dynamic>).containsKey("Tags")) {
-      tags = List.from( (documentSnapshot.data() as Map<String, dynamic>)['Tags']);
-    } else {
-      tags = [];
-    }
+  factory GroceryItemModel.fromDocumentSnapshot({
+    required DocumentSnapshot documentSnapshot,
+    required String group,
+  }) {
+    final data = documentSnapshot.data() as Map<String, dynamic>;
+    return GroceryItemModel(
+      itemId: documentSnapshot.id,
+      name: data['Name'] as String,
+      checked: data['Checked'] as bool,
+      group: group,
+      tags: data.containsKey('Tags') ? List<String>.from(data['Tags']) : [],
+    );
   }
 }

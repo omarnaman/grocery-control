@@ -9,14 +9,14 @@ class GroceryItemCard extends StatefulWidget {
   final FirebaseFirestore firestore;
   final String selectedKey;
   final Function(String, String, List<String>) onSelectItem;
-  GroceryItemCard(
-      {Key key,
-      this.item,
-      this.firestore,
-      @required String group,
-      this.onSelectItem,
-      this.selectedKey})
-      : super(key: key) {
+  GroceryItemCard({
+    super.key,
+    required this.item,
+    required this.firestore,
+    required String group,
+    required this.onSelectItem,
+    required this.selectedKey,
+  }) {
     item.group = group;
   }
 
@@ -42,7 +42,7 @@ class _GroceryItemCardState extends State<GroceryItemCard> {
               return AlertDialog(
                 title: const Text("Item Deletion"),
                 content: Text(
-                    "Are you sure you want to delete ${{widget.item.name}}?"),
+                    "Are you sure you want to delete ${widget.item.name}?"),
                 actions: [
                   TextButton(
                       onPressed: () {
@@ -71,7 +71,7 @@ class _GroceryItemCardState extends State<GroceryItemCard> {
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         shape: RoundedRectangleBorder(
             side: _isSelected
-                ? BorderSide(color: Theme.of(context).accentColor)
+                ? BorderSide(color: Theme.of(context).colorScheme.secondary)
                 : BorderSide(color: Theme.of(context).primaryColor),
             borderRadius: BorderRadius.circular(10)),
         child: Padding(

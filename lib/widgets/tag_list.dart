@@ -4,7 +4,7 @@ import 'tag.dart';
 class TagList extends StatefulWidget {
   final List<String> tags;
   final Function(int) onTagDelete;
-  TagList({Key key, this.tags, this.onTagDelete}) : super(key: key);
+  TagList({super.key, required this.tags, required this.onTagDelete});
 
   @override
   _TagListState createState() => _TagListState();
@@ -41,7 +41,7 @@ class _TagListState extends State<TagList> {
           children: rowTags,
         );
       },
-      itemCount: (widget.tags.length + 1 ~/ 2), //ceil integer division
+      itemCount: (widget.tags.length + 1) ~/ 2, //ceil integer division
     );
   }
 }

@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import 'package:grocery_control/models/grocery_item.dart';
 import 'package:grocery_control/models/group.dart';
 import 'package:grocery_control/utils/constants.dart';
@@ -7,16 +6,17 @@ import 'package:grocery_control/utils/constants.dart';
 class Database {
   final FirebaseFirestore firestore;
 
-  Database({this.firestore});
+  Database({required this.firestore});
 
-  Future<List<GroupModel>> streamGroups({String uid}) async {
+  Future<List<GroupModel>> streamGroups({required String uid}) async {
     try {
       DocumentSnapshot userDoc =
           await firestore.collection("users").doc(uid).get();
 
       final List<GroupModel> retVal = <GroupModel>[];
+      final data = userDoc.data() as Map<String, dynamic>;
       final List<DocumentReference> groupRefs =
-          userDoc["group_ref_array"].cast<DocumentReference>();
+          (data["group_ref_array"] as List).cast<DocumentReference>();
       for (DocumentReference documentRef in groupRefs) {
         retVal.add(GroupModel.fromDocumentSnapshot(
             documentSnapshot: await documentRef.get()));
@@ -27,10 +27,11 @@ class Database {
     }
   }
 
-  Future<GroupModel> getLastGroup({String uid}) async {
+  Future<GroupModel> getLastGroup({required String uid}) async {
     try {
       var doc = await firestore.collection("users").doc(uid).get();
-      DocumentReference groupRef = doc["last_group"] as DocumentReference;
+      final data = doc.data() as Map<String, dynamic>;
+      DocumentReference groupRef = data["last_group"] as DocumentReference;
       return GroupModel.fromDocumentSnapshot(
           documentSnapshot: await groupRef.get());
     } catch (e) {
@@ -38,28 +39,31 @@ class Database {
     }
   }
 
-  Future<void> setLastGroup({String uid, GroupModel group}) async {
+  Future<void> setLastGroup({
+    required String uid,
+    required GroupModel group,
+  }) async {
     try {
-      firestore.collection("users").doc(uid).update(
+      await firestore.collection("users").doc(uid).update(
           {"last_group": firestore.collection("groups").doc(group.groupId)});
     } catch (e) {
       rethrow;
     }
   }
 
-  Stream<List<GroceryItemModel>> streamItems(
-      {String group, SortDirection sortDirection}) {
+  Stream<List<GroceryItemModel>> streamItems({
+    required String group,
+    required SortDirection sortDirection,
+  }) {
     try {
-      var itemsCollection = firestore
+      return firestore
           .collection("items")
           .doc(group)
           .collection("items")
-          .where("Name", isNotEqualTo: null);
-      if (sortDirection != null) {
-        itemsCollection = itemsCollection.orderBy("Name",
-            descending: sortDirection == SortDirection.Decsending);
-      }
-      return itemsCollection.snapshots().map((query) {
+          .orderBy("Name",
+              descending: sortDirection == SortDirection.Decsending)
+          .snapshots()
+          .map((query) {
         final List<GroceryItemModel> retVal = <GroceryItemModel>[];
         for (final DocumentSnapshot doc in query.docs) {
           retVal.add(GroceryItemModel.fromDocumentSnapshot(
@@ -72,19 +76,22 @@ class Database {
     }
   }
 
-  Future<void> updateGroupName(
-      {GroupModel group, String newName, String uid}) async {
+  Future<void> updateGroupName({
+    required GroupModel group,
+    required String newName,
+    required String uid,
+  }) async {
     try {
       if (group.owner != uid) {
-        return Future.value();
+        return;
       }
       if (group.name == newName) {
-        return Future.value();
+        return;
       }
 
       DocumentReference groupDoc =
           firestore.collection("groups").doc(group.groupId);
-      groupDoc.update({
+      await groupDoc.update({
         "name": newName,
       });
     } catch (e) {
@@ -92,9 +99,13 @@ class Database {
     }
   }
 
-  Future<void> addItem({String group, String name, List<String> tags}) async {
+  Future<void> addItem({
+    required String group,
+    required String name,
+    required List<String> tags,
+  }) async {
     try {
-      firestore
+      await firestore
           .collection("items")
           .doc(group)
           .collection("items")
@@ -104,22 +115,25 @@ class Database {
     }
   }
 
-  Future<void> updateItem(
-      {String group,
-      String itemId,
-      String name,
-      bool checked,
-      List<String> tags}) async {
+  Future<void> updateItem({
+    required String group,
+    required String itemId,
+    String? name,
+    bool? checked,
+    List<String>? tags,
+  }) async {
     try {
-      Map<String, dynamic> doc = {};
-      doc["Name"] = name;
-      if (tags != null){
+      final Map<String, dynamic> doc = {};
+      if (name != null) {
+        doc["Name"] = name;
+      }
+      if (tags != null) {
         doc["Tags"] = tags;
       }
       if (checked != null) {
         doc["Checked"] = checked;
       }
-      firestore
+      await firestore
           .collection("items")
           .doc(group)
           .collection("items")
@@ -130,9 +144,9 @@ class Database {
     }
   }
 
-  Future<void> deleteItem({GroceryItemModel item}) async {
+  Future<void> deleteItem({required GroceryItemModel item}) async {
     try {
-      firestore
+      await firestore
           .collection("items")
           .doc(item.group)
           .collection("items")

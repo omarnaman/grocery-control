@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class GroupModel {
@@ -7,22 +6,21 @@ class GroupModel {
   String owner;
 
   GroupModel({
-    this.groupId,
-    this.name,
-    this.owner,
+    required this.groupId,
+    required this.name,
+    required this.owner,
   });
 
-  GroupModel.fromDocumentSnapshot({DocumentSnapshot documentSnapshot}) {
-    groupId = documentSnapshot.id;
-    name = (documentSnapshot.data() as Map<String, dynamic>)['name'] as String;
-    owner = (documentSnapshot.data() as Map<String, dynamic>)['owner'] as String;
+  GroupModel.fromDocumentSnapshot({required DocumentSnapshot documentSnapshot})
+      : groupId = documentSnapshot.id,
+        name = (documentSnapshot.data() as Map<String, dynamic>)['name'] as String,
+        owner =
+            (documentSnapshot.data() as Map<String, dynamic>)['owner'] as String;
 
-  }
-
-  bool operator ==(dynamic other) =>
-      other != null && other is GroupModel && this.groupId == other.groupId;
-  
   @override
-  int get hashCode => super.hashCode;
+  bool operator ==(Object other) =>
+      other is GroupModel && groupId == other.groupId;
 
+  @override
+  int get hashCode => groupId.hashCode;
 }

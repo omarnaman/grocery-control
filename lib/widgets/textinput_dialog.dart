@@ -4,7 +4,12 @@ class TextInputDialog extends StatefulWidget {
   final String title;
   final String hint;
   final String okOption;
-  TextInputDialog({Key key, this.hint, this.title, this.okOption}) : super(key: key);
+  TextInputDialog({
+    super.key,
+    required this.hint,
+    required this.title,
+    required this.okOption,
+  });
 
   @override
   _TextInputDialogState createState() => _TextInputDialogState();
