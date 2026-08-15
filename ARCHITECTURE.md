@@ -41,7 +41,7 @@ Clients talk to Firebase Auth, Firestore, and HTTPS callable Functions. Privileg
 | Client | Flutter (Dart SDK `>= 3.12.2`), Material, dark theme |
 | Auth | Firebase Auth (email/password) |
 | Database | Cloud Firestore |
-| Server | Cloud Functions (TypeScript, Node 12 runtime in `package.json`) |
+| Server | Cloud Functions (TypeScript, Node 22 runtime in `package.json`) |
 | QR | `qr_flutter` (display), `qr_code_scanner_plus` (scan) |
 
 **Notable Flutter dependencies:** `firebase_core`, `firebase_auth`, `cloud_firestore`, `cloud_functions`, `qr_flutter`, `qr_code_scanner_plus`.

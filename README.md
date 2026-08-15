@@ -18,9 +18,9 @@ For architecture (data model, Cloud Functions, app flow), see [ARCHITECTURE.md](
 |------|--------|
 | [Flutter](https://docs.flutter.dev/get-started/install) | Dart SDK `>= 3.12.2` (see `pubspec.yaml`) |
 | Chrome (or another browser) | Primary target today is **web** |
-| [Node.js](https://nodejs.org/) | Only needed for Cloud Functions |
-| [Firebase CLI](https://firebase.google.com/docs/cli) | Only needed to deploy/emulate functions |
-| Firebase project access | Project id: `grocery-control` |
+| [Node.js](https://nodejs.org/) | Node **22** for Cloud Functions |
+| [Firebase CLI](https://firebase.google.com/docs/cli) | Only needed to deploy/emulate functions locally |
+| Firebase project access | Project id: `grocery-control` (Blaze plan required for Functions) |
 
 Check Flutter:
 
@@ -89,7 +89,7 @@ npm install
 npm run build
 ```
 
-> `package.json` pins `"engines": { "node": "12" }`. Use a compatible Node version (or update the engine + Firebase runtime when you modernize the functions).
+> `package.json` pins `"engines": { "node": "22" }`. Use Node 22 locally when installing or building functions.
 
 ### Emulators (optional)
 
@@ -104,7 +104,7 @@ Configured ports: Auth `9099`, Functions `5001`, Firestore `8081`, Emulator UI e
 
 To point the Flutter app at emulators, you must wire `useFirestoreEmulator` / `useFunctionsEmulator` / Auth emulator in code (not configured by default).
 
-### Deploy functions
+### Deploy functions (local)
 
 ```bash
 cd firebase_functions
@@ -118,6 +118,40 @@ Or from `firebase_functions/functions`:
 ```bash
 npm run deploy
 ```
+
+## GitHub Actions deployment
+
+CI deploys from the **`prod`** branch only. **`main`** is for development and does not ship.
+
+| Branch / event | Hosting | Cloud Functions |
+|----------------|---------|-----------------|
+| Push to `prod` | Live channel | Deployed (when `firebase_functions/**` changes) |
+| PR targeting `prod` | Preview channel (PR comment with URL) | Not deployed |
+| Push / PR on `main` | No deploy | No deploy |
+| Manual `workflow_dispatch` | Live Hosting (run from `prod`) | Functions (run from `prod`) |
+
+**Ship a release:** land work on `main`, then merge `main` into `prod` (or open a PR into `prod`). Merging to `prod` triggers production deploys.
+
+### One-time setup
+
+1. Create the GitHub repo, push `main`, then create and push a `prod` branch.
+2. Create a GCP service account on project `grocery-control` with at least:
+   - Firebase Hosting Admin
+   - Cloud Functions Admin
+   - Service Account User
+   - Cloud Build Editor
+   - Artifact Registry Writer
+3. Add the service account JSON as the GitHub secret `FIREBASE_SERVICE_ACCOUNT`.
+4. Confirm the Firebase project is on the **Blaze** plan (required to deploy Functions).
+
+Workflows:
+
+- [`.github/workflows/deploy-hosting.yml`](.github/workflows/deploy-hosting.yml) — Flutter web build → Firebase Hosting
+- [`.github/workflows/deploy-functions.yml`](.github/workflows/deploy-functions.yml) — npm build → Cloud Functions
+
+### Manual deploy from GitHub
+
+In the repo: **Actions** → choose **Deploy Hosting** or **Deploy Functions** → **Run workflow** → select branch **`prod`**.
 
 ## Android / iOS (not configured yet)
 

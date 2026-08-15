@@ -33,7 +33,6 @@ dart_defines.local.json
 .pub-cache/
 .pub/
 /build/
-firebase_options.dart
 
 # Web related
 
@@ -47,4 +46,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-pubspec.lock
+
+
+# Firebase cache
+.firebase/*.cache

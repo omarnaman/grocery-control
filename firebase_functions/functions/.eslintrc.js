@@ -25,6 +25,10 @@ module.exports = {
     "import",
   ],
   rules: {
-    quotes: ["error", "double"],
+    "quotes": ["error", "double"],
+    "linebreak-style": "off",
+    "import/no-unresolved": ["error", {
+      "ignore": ["^firebase-functions(/.*)?$"],
+    }],
   },
 };

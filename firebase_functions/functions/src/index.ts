@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 /* eslint-disable object-curly-spacing */
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 admin.initializeApp();
 
@@ -18,7 +18,7 @@ export const SignUp = functions.auth.user().onCreate((user) => {
     admin.firestore().collection("items").doc(groupId);
   const groupName = "Default Group";
 
-  groupDocumentRef.create({ owner: userId, name: groupName });
+  groupDocumentRef.create({owner: userId, name: groupName});
   userDocumentRef.create({
     last_group: groupDocumentRef,
     group_ref_array: [groupDocumentRef],
@@ -56,9 +56,9 @@ export const CreateGroup = functions.https.onCall((data, context) => {
     userDocumentRef.update({
       group_ref_array: groups,
     });
-    return { text: "Done", id: groupDocumentRef };
+    return {text: "Done", id: groupDocumentRef};
   }).catch((err) => {
-    return { error: err };
+    return {error: err};
   });
 });
 
@@ -103,8 +103,8 @@ export const JoinGroup = functions.https.onCall((data, context) => {
     userDocumentRef.update({
       group_ref_array: groups,
     });
-    return { text: "Done", id: groupDocumentRef };
+    return {text: "Done", id: groupDocumentRef};
   }).catch((err) => {
-    return { error: err };
+    return {error: err};
   });
 });
