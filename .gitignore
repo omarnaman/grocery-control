@@ -20,6 +20,9 @@
 # is commented out by default.
 #.vscode/
 
+# Local debug dart-defines (copy from dart_defines.local.json.example)
+dart_defines.local.json
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id

@@ -31,6 +31,14 @@ class _AqelCheckboxState extends State<AqelCheckbox> {
   }
 
   @override
+  void didUpdateWidget(covariant AqelCheckbox oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      _isSelected = widget.value;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {

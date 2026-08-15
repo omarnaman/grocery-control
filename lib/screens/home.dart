@@ -4,16 +4,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:grocery_control/models/grocery_item.dart';
 import 'package:grocery_control/models/group.dart';
+import 'package:grocery_control/models/list_change.dart';
 import 'package:grocery_control/services/auth.dart';
 import 'package:grocery_control/services/db.dart';
 import 'package:grocery_control/services/grocery_catalog.dart';
+import 'package:grocery_control/services/list_snapshot_cache.dart';
 import 'package:grocery_control/utils/constants.dart';
+import 'package:grocery_control/utils/list_diff.dart';
 import 'package:grocery_control/widgets/aqel_checkbox.dart';
 import 'package:grocery_control/widgets/item_card.dart';
 import 'package:grocery_control/widgets/tag_list.dart';
 import 'package:grocery_control/widgets/textinput_dialog.dart';
 import 'package:grocery_control/widgets/group_qrcode.dart';
 import 'package:grocery_control/screens/qr_scanner.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   final FirebaseAuth auth;
@@ -30,11 +34,12 @@ class Home extends StatefulWidget {
   _HomeState createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with WidgetsBindingObserver {
   final TextEditingController _itemController = TextEditingController();
   final TextEditingController _tagsController = TextEditingController();
   final FocusNode _itemFocusNode = FocusNode();
   final GroceryCatalog _groceryCatalog = GroceryCatalog();
+  final ListSnapshotCache _snapshotCache = ListSnapshotCache();
   late GroupModel _group;
   SortDirection _sortDirection = SortDirection.Ascending;
   bool _filterChecked = false;
@@ -47,15 +52,29 @@ class _HomeState extends State<Home> {
   bool _visibleHeader = true;
   List<GroceryItemCard> _itemList = [];
   List<String> _itemHistory = [];
+
+  /// In-memory baseline used for diffing; updated on self-edits.
+  Map<String, SnapshotItem> _workingBaseline = {};
+
+  /// False on first visit (no persisted snapshot) so nothing highlights.
+  bool _highlightingEnabled = false;
+  List<GroceryItemModel> _latestLiveItems = [];
+
+  String get _uid => widget.auth.currentUser?.uid ?? '';
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scrollController = ScrollController();
     _group = widget.group;
     _isOwner = _group.owner == widget.auth.currentUser?.uid;
     _newTagList = [];
     _groceryCatalog.load().then((_) {
       if (mounted) setState(() {});
+    });
+    _initializePreferences().whenComplete(() {
+      _loadBaseline();
     });
     _scrollController.addListener(() {
       if (_isItemSelected) {
@@ -82,8 +101,58 @@ class _HomeState extends State<Home> {
     });
   }
 
+  Future<void> _initializePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<void> _loadBaseline() async {
+    final loaded = await _snapshotCache.load(_uid, _group.groupId);
+    if (!mounted) return;
+    setState(() {
+      if (loaded == null) {
+        _workingBaseline = {};
+        _highlightingEnabled = false;
+      } else {
+        _workingBaseline = Map<String, SnapshotItem>.from(loaded);
+        _highlightingEnabled = true;
+      }
+    });
+  }
+
+  Future<void> _persistBaseline({List<GroceryItemModel>? items}) async {
+    final toSave = items ?? _latestLiveItems;
+    await _snapshotCache.save(
+      uid: _uid,
+      groupId: _group.groupId,
+      items: toSave,
+    );
+  }
+
+  void _acknowledgeLocalItem({
+    required String itemId,
+    required String name,
+    required bool checked,
+  }) {
+    _workingBaseline[itemId] = SnapshotItem(name: name, checked: checked);
+  }
+
+  void _acknowledgeLocalDelete(String itemId) {
+    _workingBaseline.remove(itemId);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      _persistBaseline();
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _persistBaseline();
     _scrollController.dispose();
     _itemController.dispose();
     _tagsController.dispose();
@@ -128,6 +197,7 @@ class _HomeState extends State<Home> {
             key: const ValueKey("signOut"),
             icon: const Icon(Icons.exit_to_app),
             onPressed: () {
+              _persistBaseline();
               Auth(auth: widget.auth).signOut();
             },
           ),
@@ -186,18 +256,24 @@ class _HomeState extends State<Home> {
                             );
                           }).toList(),
                           isExpanded: true,
-                          onChanged: (GroupModel? newValue) {
+                          onChanged: (GroupModel? newValue) async {
+                            if (newValue == null) return;
+                            await _persistBaseline();
                             setState(() {
-                              if (newValue == null) return;
                               _group = newValue;
                               _isOwner =
                                   _group.owner == widget.auth.currentUser?.uid;
+                              _selectedKey = '';
+                              _isItemSelected = false;
+                              _itemController.clear();
+                              _newTagList.clear();
                               Database(firestore: widget.firestore)
                                   .setLastGroup(
                                       uid: widget.auth.currentUser?.uid ?? '',
                                       group: _group);
                             });
-                            Navigator.pop(context);
+                            await _loadBaseline();
+                            if (mounted) Navigator.pop(context);
                           },
                         );
                       } else {
@@ -466,8 +542,9 @@ class _HomeState extends State<Home> {
                   AsyncSnapshot<List<GroceryItemModel>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.active) {
                   _itemList.clear();
-                  final items = snapshot.data;
-                  if (items != null && items.isNotEmpty) {
+                  final items = snapshot.data ?? [];
+                  _latestLiveItems = List<GroceryItemModel>.from(items);
+                  if (items.isNotEmpty) {
                     _itemHistory = items
                         .map((e) => e.name)
                         .where((name) => name.trim().isNotEmpty)
@@ -475,25 +552,61 @@ class _HomeState extends State<Home> {
                   } else {
                     _itemHistory = [];
                   }
-                  if (items == null || items.isEmpty) {
+
+                  final ListDiffResult? diff = _highlightingEnabled
+                      ? diffGroceryLists(
+                          baseline: _workingBaseline,
+                          current: items,
+                          groupId: _group.groupId,
+                        )
+                      : null;
+
+                  final displayItems = <GroceryItemModel>[
+                    ...items,
+                    if (diff != null) ...diff.deletedGhosts,
+                  ];
+                  final ghostIds = {
+                    if (diff != null)
+                      for (final g in diff.deletedGhosts) g.itemId,
+                  };
+
+                  if (displayItems.isEmpty) {
                     return const Center(
                       child: Text("You don't have any unchecked items"),
                     );
                   }
                   return ListView.builder(
                     key: PageStorageKey("itemList"),
-                    itemCount: items.length,
+                    itemCount: displayItems.length,
                     controller: _scrollController,
                     itemBuilder: (_, index) {
-                      if (_filterChecked && items[index].checked) {
+                      final item = displayItems[index];
+                      final isGhost = ghostIds.contains(item.itemId);
+                      if (!isGhost && _filterChecked && item.checked) {
                         return SizedBox.shrink();
                       }
                       var card = GroceryItemCard(
-                        key: UniqueKey(),
+                        key: ValueKey('${item.itemId}_$isGhost'),
                         firestore: widget.firestore,
-                        item: items[index],
+                        item: item,
                         group: _group.groupId,
                         selectedKey: _selectedKey,
+                        changeType: diff?.changes[item.itemId],
+                        isGhost: isGhost,
+                        onCheckedLocally: (itemId, checked) {
+                          setState(() {
+                            _acknowledgeLocalItem(
+                              itemId: itemId,
+                              name: item.name,
+                              checked: checked,
+                            );
+                          });
+                        },
+                        onDeletedLocally: (itemId) {
+                          setState(() {
+                            _acknowledgeLocalDelete(itemId);
+                          });
+                        },
                         onSelectItem:
                             (String key, String name, List<String> tags) {
                           setState(() {
@@ -535,24 +648,41 @@ class _HomeState extends State<Home> {
     );
   }
 
-  _saveItem() {
-    if (_itemController.text != "") {
+  Future<void> _saveItem() async {
+    if (_itemController.text == "") return;
+    final name = _itemController.text;
+    final tags = _newTagList.toList();
+    if (_isItemSelected) {
+      final itemId = _selectedKey;
+      await Database(firestore: widget.firestore).updateItem(
+          group: _group.groupId,
+          name: name,
+          itemId: itemId,
+          tags: tags);
       setState(() {
-        if (_isItemSelected) {
-          Database(firestore: widget.firestore).updateItem(
-              group: _group.groupId,
-              name: _itemController.text,
-              itemId: _selectedKey,
-              tags: _newTagList);
-        } else {
-          Database(firestore: widget.firestore).addItem(
-              group: _group.groupId,
-              name: _itemController.text,
-              tags: _newTagList);
-          _itemController.clear();
-          _newTagList.clear();
-          _tagsController.clear();
+        bool previousChecked = false;
+        for (final e in _latestLiveItems) {
+          if (e.itemId == itemId) {
+            previousChecked = e.checked;
+            break;
+          }
         }
+        previousChecked =
+            _workingBaseline[itemId]?.checked ?? previousChecked;
+        _acknowledgeLocalItem(
+          itemId: itemId,
+          name: name,
+          checked: previousChecked,
+        );
+      });
+    } else {
+      final itemId = await Database(firestore: widget.firestore).addItem(
+          group: _group.groupId, name: name, tags: tags);
+      setState(() {
+        _acknowledgeLocalItem(itemId: itemId, name: name, checked: false);
+        _itemController.clear();
+        _newTagList.clear();
+        _tagsController.clear();
       });
     }
   }

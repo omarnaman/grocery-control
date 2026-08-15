@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:grocery_control/screens/home.dart';
 import 'package:grocery_control/screens/login.dart';
@@ -12,8 +13,32 @@ import 'package:grocery_control/models/group.dart';
 import 'package:grocery_control/firebase_options.dart';
 
 Future<void> main() async {
-  
   runApp(App());
+}
+
+/// Debug-only auto-login via:
+/// `flutter run --dart-define=AUTO_LOGIN_EMAIL=... --dart-define=AUTO_LOGIN_PASSWORD=...`
+Future<void> _maybeAutoLogin() async {
+  const email = String.fromEnvironment('AUTO_LOGIN_EMAIL');
+  const password = String.fromEnvironment('AUTO_LOGIN_PASSWORD');
+  if (!kDebugMode || email.isEmpty || password.isEmpty) {
+    return;
+  }
+
+  final auth = FirebaseAuth.instance;
+  if (auth.currentUser != null) {
+    return;
+  }
+
+  await Auth(auth: auth).signIn(email: email, password: password);
+}
+
+Future<FirebaseApp> _bootstrapFirebase() async {
+  final app = await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await _maybeAutoLogin();
+  return app;
 }
 
 class App extends StatelessWidget {
@@ -23,8 +48,7 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
       home: FutureBuilder(
-        // Initialize FlutterFire:
-        future: Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+        future: _bootstrapFirebase(),
         builder: (context, snapshot) {
           // Check for errors
           if (snapshot.hasError) {

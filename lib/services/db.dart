@@ -88,28 +88,32 @@ class Database {
       if (group.name == newName) {
         return;
       }
+      final trimmedName = newName.trim();
 
       DocumentReference groupDoc =
           firestore.collection("groups").doc(group.groupId);
       await groupDoc.update({
-        "name": newName,
+        "name": trimmedName,
       });
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<void> addItem({
+  Future<String> addItem({
     required String group,
     required String name,
     required List<String> tags,
   }) async {
     try {
-      await firestore
+      final trimmedName = name.trim();
+
+      final doc = await firestore
           .collection("items")
           .doc(group)
           .collection("items")
-          .add({"Name": name, "Checked": false, "Tags": tags});
+          .add({"Name": trimmedName, "Checked": false, "Tags": tags});
+      return doc.id;
     } catch (e) {
       rethrow;
     }
@@ -125,7 +129,8 @@ class Database {
     try {
       final Map<String, dynamic> doc = {};
       if (name != null) {
-        doc["Name"] = name;
+        final trimmedName = name.trim();
+        doc["Name"] = trimmedName;
       }
       if (tags != null) {
         doc["Tags"] = tags;
