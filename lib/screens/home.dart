@@ -10,6 +10,7 @@ import 'package:grocery_control/services/db.dart';
 import 'package:grocery_control/services/grocery_catalog.dart';
 import 'package:grocery_control/services/list_snapshot_cache.dart';
 import 'package:grocery_control/utils/constants.dart';
+import 'package:grocery_control/utils/join_payload.dart';
 import 'package:grocery_control/utils/list_diff.dart';
 import 'package:grocery_control/widgets/aqel_checkbox.dart';
 import 'package:grocery_control/widgets/item_card.dart';
@@ -76,6 +77,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     _initializePreferences().whenComplete(() {
       _loadBaseline();
     });
+    _itemController.addListener(_onItemQueryChanged);
     _scrollController.addListener(() {
       if (_isItemSelected) {
         if (!_visibleHeader) {
@@ -140,6 +142,79 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
     _workingBaseline.remove(itemId);
   }
 
+  void _onItemQueryChanged() {
+    if (mounted) setState(() {});
+  }
+
+  List<GroceryItemModel> _itemsMatchingQuery(List<GroceryItemModel> items) {
+    final query = _itemController.text.trim().toLowerCase();
+    if (query.isEmpty) return items;
+    return items
+        .where((item) => item.name.toLowerCase().contains(query))
+        .toList();
+  }
+
+  Future<void> _clearDiff() async {
+    setState(() {
+      _workingBaseline = snapshotFromItems(_latestLiveItems);
+      _highlightingEnabled = true;
+    });
+    await _persistBaseline();
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Diff cleared")),
+    );
+  }
+
+  Future<void> _joinGroup(Map<String, dynamic> codeData) async {
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable("JoinGroup");
+      await callable.call(codeData);
+      if (!mounted) return;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Joined group")),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not join group")),
+      );
+    }
+  }
+
+  Future<void> _joinGroupByCode() async {
+    final value = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return TextInputDialog(
+          title: "Join Group",
+          hint: "Invite code",
+          okOption: "Join",
+        );
+      },
+    );
+    if (value == null) return;
+    final payload = parseJoinPayload(value);
+    if (payload == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid invite code")),
+      );
+      return;
+    }
+    await _joinGroup(payload);
+  }
+
+  Future<void> _scanToJoin() async {
+    final codeData = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(builder: (_) => QRCodeScanner()),
+    );
+    if (codeData == null) return;
+    await _joinGroup(codeData);
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
@@ -153,6 +228,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _persistBaseline();
+    _itemController.removeListener(_onItemQueryChanged);
     _scrollController.dispose();
     _itemController.dispose();
     _tagsController.dispose();
@@ -204,13 +280,11 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         ],
       ),
       drawer: Drawer(
-          child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 30),
-              child: Column(
+          child: SafeArea(
+              child: ListView(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
                 children: <Widget>[
-                  const SizedBox(
-                    height: 30,
-                  ),
                   FutureBuilder(
                     future: Database(firestore: widget.firestore)
                         .streamGroups(uid: widget.auth.currentUser?.uid ?? ''),
@@ -320,7 +394,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                     ],
                   ),
                   const SizedBox(
-                    height: 30,
+                    height: 16,
                   ),
                   Card(
                       margin: const EdgeInsets.all(1),
@@ -340,34 +414,45 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                               ),
                             ],
                           ))),
-                  IconButton(
-                      onPressed: () {
-                        showDialog(
-                            context: context,
-                            builder: (context) {
-                              return GroupQRCodeDialog(
-                                groupModel: _group,
-                              );
-                            });
-                      },
-                      icon: Icon(Icons.qr_code)),
-                  const SizedBox(
-                    height: 30,
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.highlight_off),
+                    title: const Text("Clear diff"),
+                    onTap: _clearDiff,
                   ),
-                  IconButton(
-                      onPressed: () async {
-                        final codeData = await Navigator.of(context).push<
-                            Map<String, dynamic>>(
-                          MaterialPageRoute(builder: (_) => QRCodeScanner()),
-                        );
-                        if (codeData == null) {
-                          return;
-                        }
-                        HttpsCallable callable = FirebaseFunctions.instance
-                            .httpsCallable("JoinGroup");
-                        await callable.call(codeData);
-                      },
-                      icon: Icon(Icons.qr_code_scanner)),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.qr_code),
+                    title: const Text("Share group"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            return GroupQRCodeDialog(
+                              groupModel: _group,
+                            );
+                          });
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.vpn_key),
+                    title: const Text("Join with code"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _joinGroupByCode();
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.qr_code_scanner),
+                    title: const Text("Scan to join"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _scanToJoin();
+                    },
+                  ),
                 ],
               ))),
       body: Column(
@@ -561,18 +646,23 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         )
                       : null;
 
-                  final displayItems = <GroceryItemModel>[
+                  final displayItems = _itemsMatchingQuery(<GroceryItemModel>[
                     ...items,
                     if (diff != null) ...diff.deletedGhosts,
-                  ];
+                  ]);
                   final ghostIds = {
                     if (diff != null)
                       for (final g in diff.deletedGhosts) g.itemId,
                   };
 
                   if (displayItems.isEmpty) {
-                    return const Center(
-                      child: Text("You don't have any unchecked items"),
+                    final searching = _itemController.text.trim().isNotEmpty;
+                    return Center(
+                      child: Text(
+                        searching
+                            ? "No matching items"
+                            : "You don't have any unchecked items",
+                      ),
                     );
                   }
                   return ListView.builder(
